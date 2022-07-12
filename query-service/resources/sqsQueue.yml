@@ -1,0 +1,73 @@
+Resources:
+  serviceQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ${self:service}-${opt:stage}-serviceQueue
+      VisibilityTimeout: 120
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt serviceQueueDeadLetterQueue.Arn
+        maxReceiveCount: 3
+  serviceQueueDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ${self:service}-${opt:stage}-serviceQueueDLQ
+
+
+
+  serviceQueueEventRuleProfile: 
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "EventRule"
+      EventBusName: ${self:custom.eventBusName}
+      EventPattern: 
+        account: 
+          - !Sub '${AWS::AccountId}'
+        source:
+          - control.service
+        detail-type:
+          - something.detail
+      Targets:  
+        - Arn:  
+            Fn::GetAtt:
+              - serviceQueue
+              - Arn
+          Id: "SQSqueue"
+
+  # Allow EventBridge to invoke SQS
+  EventBridgeToToSqsPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: events.amazonaws.com
+          Action: SQS:SendMessage
+          Resource: 
+            Fn::GetAtt:
+              - serviceQueue
+              - Arn
+      Queues:
+        - Ref: serviceQueue
+
+Outputs:
+  SQSqueueName:
+    Description: SQS queue name
+    Value: 
+      Fn::GetAtt:
+        - serviceQueue
+        - QueueName
+    
+
+  SQSqueueARN:
+    Description: SQS queue ARN
+    Value: 
+      Fn::GetAtt:
+        - serviceQueue
+        - Arn
+
+
+  SQSqueueURL:
+    Description: SQS queue URL
+    Value:
+      Ref: serviceQueue

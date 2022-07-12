@@ -1,0 +1,15 @@
+Resources:
+  EventBridgeBus:
+    Type: AWS::Events::EventBus
+    Properties:
+        Name: ${self:custom.eventBusName}
+
+Outputs:
+  BusName:
+    Export:
+      Name: ${self:service}-${opt:stage}-event-bus-name
+    Value: !GetAtt EventBridgeBus.Name
+  BusARN:
+    Export:
+      Name: ${self:service}-${opt:stage}-event-bus-arn
+    Value: !GetAtt EventBridgeBus.Arn

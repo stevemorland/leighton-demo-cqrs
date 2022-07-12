@@ -1,0 +1,53 @@
+service: leighton-cqrs-query
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: ${opt:stage}
+  region: eu-west-2
+  versionFunctions: false 
+
+plugins:
+  - serverless-plugin-typescript
+
+functions:
+  processQueue:
+    handler: src/processQueue.handler
+    role: processQueueItemsRole
+    environment:
+      TABLE_NAME: ${self:custom.ledger.tableName}
+      STAGE_NAME: ${opt:stage}
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - serviceQueue
+              - Arn 
+
+params:
+  production:
+    logLevel: WARN
+
+  uat:
+    logLevel: INFO
+
+  staging:
+    logLevel: DEBUG
+
+  dev:
+    logLevel: DEBUG
+
+
+custom:
+  ledger:
+    arn: !GetAtt ledgerTable.Arn
+    tableName: ${self:service}-${opt:stage}-ledgerTable
+  eventBusName: leighton-cprs-query-application-bus-${self:provider.stage}
+  eventBusARN: !GetAtt EventBridgeBus.Arn
+resources:
+  - ${file(./resources/dynamoTables.yml)}
+  - ${file(./resources/sqsQueue.yml)}
+  - ${file(./roles/processQueueItemsRole.yml)}
+
+  
