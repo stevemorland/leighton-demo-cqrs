@@ -43,8 +43,8 @@ custom:
   ledger:
     arn: !GetAtt ledgerTable.Arn
     tableName: ${self:service}-${opt:stage}-ledgerTable
-  eventBusName: leighton-cprs-query-application-bus-${self:provider.stage}
-  eventBusARN: !GetAtt EventBridgeBus.Arn
+  eventBusName: !ImportValue leighton-cqrs-control-${self:provider.stage}-event-bus-name
+  eventBusARN: !ImportValue leighton-cqrs-control-${self:provider.stage}-event-bus-arn
 resources:
   - ${file(./resources/dynamoTables.yml)}
   - ${file(./resources/sqsQueue.yml)}
